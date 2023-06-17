@@ -1,0 +1,7 @@
+pytorch-lightning
+git+https://github.com/openai/CLIP.git
+omegaconf
+transformers
+einops
+matplotlib
+pillow
