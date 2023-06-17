@@ -41,7 +41,7 @@ pip install -r requirements.txt
 - MAGVLT uses VQGAN (OpenImages, f=8, 16384) as the image encoder which can be downloaded from [this repo](https://github.com/CompVis/taming-transformers).
 
 ## Pretrained Checkpoints
-We provide pretrained checkpoints of MAGVLT to reproduce the results in the paper.
+We provide pretrained checkpoints of MAGVLT to reproduce the results in the paper. (It will be updated soon.)
 
 |      Model       |         #Parameters          | CIDEr (↑, coco) | CIDEr (↑, NoCaps) | FID (↓, coco) |
 |:----------------:|:----------------------------:|:---------------:|:-----------------:|:-------------:|
