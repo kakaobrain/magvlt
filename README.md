@@ -13,7 +13,6 @@ MAGVLT is a unified non-autoregressive generative Vision-and-Language (VL) model
 </div>
 
 ## Requirements
-Basic setup
 We have tested our codes on the environment below
 ```angular2html
 PyTorch 1.10.0
@@ -38,15 +37,16 @@ pip install -r requirements.txt
 - [ ] Training pipeline with data preparation example
 
 
-- MAGVLT uses VQGAN (OpenImages, f=8, 16384) as the image encoder which can be downloaded from [this repo](https://github.com/CompVis/taming-transformers).
 
 ## Pretrained Checkpoints
+MAGVLT uses VQGAN (vqgan_imagenet_f16_16384) as the image encoder which can be downloaded from [this repo](https://github.com/CompVis/taming-transformers).
+
 The pretrained MAGVLTs will be available soon.
 
 |      Model       |         #Parameters          | CIDEr (↑, coco) | CIDEr (↑, NoCaps) | FID (↓, coco) |
 |:----------------:|:----------------------------:|:---------------:|:-----------------:|:-------------:|
-| [MAGVLT-base]()  | 371M                         |      60.4       |       46.3        |     12.08     |
-| [MAGVLT-large]() |             840M             |      68.1       |       55.8        |     10.14     |
+| [MAGVLT-base](https://arena.kakaocdn.net/brainrepo/models/magvlt/magvlt-it2it-base.ckpt)  | 371M                         |      60.4       |       46.3        |     12.08     |
+| [MAGVLT-large](https://arena.kakaocdn.net/brainrepo/models/magvlt/magvlt-it2it-large.ckpt) |             840M             |      68.1       |       55.8        |     10.14     |
 
 ## Sampling
 We provide the following sampling codes.
