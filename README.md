@@ -43,8 +43,8 @@ MAGVLT uses VQGAN (vqgan_imagenet_f16_16384) as the image encoder which can be d
 
 |      Model       |         #Parameters          | CIDEr (↑, coco) | CIDEr (↑, NoCaps) | FID (↓, coco) |
 |:----------------:|:----------------------------:|:---------------:|:-----------------:|:-------------:|
-| [MAGVLT-base](https://arena.kakaocdn.net/brainrepo/models/magvlt/magvlt-it2it-base.ckpt)  | 371M                         |      60.4       |       46.3        |     12.08     |
-| [MAGVLT-large](https://arena.kakaocdn.net/brainrepo/models/magvlt/magvlt-it2it-large.ckpt) |             840M             |      68.1       |       55.8        |     10.14     |
+| [MAGVLT-base](https://twg.kakaocdn.net/brainrepo/models/magvlt/magvlt-it2it-base.ckpt)  | 371M                         |      60.4       |       46.3        |     12.08     |
+| [MAGVLT-large](https://twg.kakaocdn.net/brainrepo/models/magvlt/magvlt-it2it-large.ckpt) |             840M             |      68.1       |       55.8        |     10.14     |
 
 ## Sampling
 We provide the following sampling codes.
