@@ -1,0 +1,82 @@
+cfg_path: ???
+result_path: ???
+result_file_path: ???
+checkpoint_path: ???
+eval: False
+resume: False
+finetune: False
+
+dist:
+  n_gpus: 1
+  n_nodes: 1
+
+dataset:
+  type: mapstyle
+  name: coco2014
+  loc: bcloud
+  num_workers: 4
+  shuffle: True
+  tokenizer:
+    type: CharBPE
+    hparams:
+      context_length: 64
+      bpe_pdrop: 0.1
+  transform:
+    type: dalle-vqvae
+    hparams:
+      resolution: 256
+  gt_text: False
+
+stage2:
+  type: maskgit
+  mask_hparams:
+    task: t2i
+    t2i_schedule: cosine
+    i2t_schedule: linear
+    i2t_n_steps: 8
+    t2i_n_steps: 8
+    fixed_mask: False
+  hparams:
+    pos_emb_img_mode: la1d
+    pos_emb_txt_mode: la1d
+
+sampling:
+  txt_max_len: 32
+  txt_num_cand_samples: 64
+  txt_sample_size: 32
+  txt_sample_method: sample_rerank
+  txt_mask_sample_method: sample
+  txt_top_k: 32
+  txt_top_p: 0
+  txt_num_steps: 8 # i2t_n_steps
+  txt_temperature: 0.5
+  img_num_cand_samples: 32
+  img_mask_sample_method: multinomial-maskgit
+  img_temperature_start: 1.4
+  img_temperature_end: 0.6
+  img_mult_temperature_start: 2.0
+  img_mult_temperature_end: 0.2
+  img_num_steps: 10
+  seed: 0
+
+
+experiment:
+  seed: 0
+  local_batch_size: 16
+  total_batch_size: 1024
+  val_batch_size: 16
+  max_steps: 300000
+  max_epochs: 100
+  every_n_epochs: 1
+  val_check_interval: 2000
+  img_log_interval: 2000
+  ckpt_save_interval: 2000
+  log_every_n_steps: 10
+  strategy:
+    type: ddp # [ddp, zero1, zero2, zero3]
+    offload_optimizer: False
+    offload_parameters: False
+  label_smoothing_for_txt: 0.0
+  label_smoothing_for_img: 0.0
+  test_split: 'test'
+  masked_loss: False

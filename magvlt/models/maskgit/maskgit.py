@@ -8,6 +8,7 @@ from pytorch_lightning import LightningModule
 from PIL import Image
 
 from magvlt.models.utils import get_positional_enc, token2txt, top_k_top_p_filtering
+from magvlt.datamodules.datasets.dataclass import Items
 
 
 eps = torch.finfo(torch.float16).eps
@@ -842,78 +843,60 @@ class MaskGITModel(LightningModule):
 
         return pixels
 
-    def sample_i2t(
-        self,
-        source_img,
-        txt,
-        txt_mask,
-    ):
+    def sample_i2t(self, batch: Items, tok_img=None, sample_size=1, return_tokens=False, input_text=False):
         with torch.no_grad():
-            tok_img = self.model_vqvae.get_codes(source_img).detach()
+            if tok_img is None:
+                tok_img = self.model_vqvae.get_codes(batch.img).detach()
 
-        num_batches = (
-            self.cfg.sampling.txt_num_cand_samples // self.cfg.sampling.txt_sample_size
-        )
-        sample_size = self.cfg.sampling.txt_sample_size
+            expanded_return_idx = (
+                torch.arange(tok_img.shape[0]).view(-1, 1).repeat(1, sample_size).view(-1).to(tok_img.device)
+            )
+            if not input_text: # i2t case
+                inputs = torch.ones_like(batch.txt) * self.tokenizer.eos_token_id
+            else: # it2t, text-infilling case
+                inputs = batch.txt
+            tok, pos, loc_img, loc_txt, loc_spc = self._get_input(tok_img, inputs, task='i2t')
+            loc_mask, attn_mask, r = self._get_mask(loc_img, loc_txt, loc_spc, r=1, task='i2t', txt_mask=batch.txt_mask)
 
-        texts_token, score = [], []
-        for _ in range(num_batches):
-            with torch.no_grad():
-                expanded_return_idx = (
-                    torch.arange(tok_img.shape[0])
-                    .view(-1, 1)
-                    .repeat(1, sample_size)
-                    .view(-1)
-                    .to(tok_img.device)
-                )
-                tok, pos, loc_img, loc_txt, loc_spc = self._get_input(
-                    tok_img, txt, task="i2t"
-                )
-                loc_mask, attn_mask, r = self._get_mask(
-                    loc_img, loc_txt, loc_spc, r=1, task="i2t", txt_mask=txt_mask
-                )
+            if input_text:
+                txt_mask = (inputs != self.tokenizer.eos_token_id).int()
+                len = torch.sum(txt_mask)
+                mask_len = len // 2  # 50% center masking
+                txt_mask[0, int(len // 2 - mask_len // 2): int(len // 2 - mask_len // 2) + mask_len] = 0
+                txt_mask_pad = (inputs == self.tokenizer.eos_token_id).int()
+                txt_mask = (txt_mask + txt_mask_pad).flatten()
 
-                tok_masked, _loc_spc = self._apply_mask(
-                    tok, loc_spc, loc_mask, loc_img, loc_txt
-                )
-                x = self.model(
-                    tok_masked, pos, loc_img, loc_txt, _loc_spc, attn_mask=attn_mask
-                )
-                length_logits = self.predict_length(x)
-                dist = torch.distributions.categorical.Categorical(logits=length_logits)
-                N = torch.argmax(dist.probs, dim=-1) + 1
+                B = tok_img.shape[0]
+                txt_mask_rep = txt_mask.bool()
+                if inputs.shape[0] == 1:
+                    txt_mask_rep = torch.repeat_interleave(txt_mask_rep, B, dim=0)
+                txt_mask_rep = txt_mask_rep.reshape([B, -1])
+                offset = loc_txt[0].nonzero()[0]
+                loc_txt_mask = torch.zeros_like(loc_mask).bool()
+                loc_txt_mask[:, offset:][txt_mask_rep] = True
+                loc_mask = torch.logical_and(loc_mask, ~loc_txt_mask)
 
-                if sample_size > 1:
-                    tok = tok.index_select(0, expanded_return_idx)
-                    pos = pos.index_select(0, expanded_return_idx)
-                    loc_img = loc_img.index_select(0, expanded_return_idx)
-                    loc_txt = loc_txt.index_select(0, expanded_return_idx)
-                    loc_spc = loc_spc.index_select(0, expanded_return_idx)
-                    N = N.index_select(0, expanded_return_idx)
-                    n_var_high = 1
-                    length_variation = torch.randint(
-                        n_var_high, N.size(), device=N.device
-                    )
-                    length_variation = torch.where(
-                        torch.cuda.FloatTensor(N.size()).uniform_() > 0.5,
-                        -length_variation,
-                        length_variation,
-                    )
-                    N += length_variation
-                _texts_token, _score = self.sample_txt_tok(
-                    tok,
-                    pos,
-                    loc_img,
-                    loc_txt,
-                    loc_spc,
-                    N,
-                    return_tokens=True,
-                )
-                texts_token.append(_texts_token)
-                score.append(_score)
+            tok_masked, _loc_spc = self._apply_mask(tok, loc_spc, loc_mask, loc_img, loc_txt)
+            x = self.model(tok_masked, pos, loc_img, loc_txt, _loc_spc, attn_mask=attn_mask)
+            length_logits = self.predict_length(x)
+            dist = torch.distributions.categorical.Categorical(logits=length_logits)
+            N = torch.argmax(dist.probs, dim=-1) + 1
 
-        texts_token = torch.cat(texts_token, dim=0)
+            if sample_size > 1:
+                tok = tok.index_select(0, expanded_return_idx)
+                pos = pos.index_select(0, expanded_return_idx)
+                loc_img = loc_img.index_select(0, expanded_return_idx)
+                loc_txt = loc_txt.index_select(0, expanded_return_idx)
+                loc_spc = loc_spc.index_select(0, expanded_return_idx)
+                N = N.index_select(0, expanded_return_idx)
+                n_var_high = 1
+                length_variation = torch.randint(n_var_high, N.size(), device=N.device)
+                length_variation = torch.where(torch.cuda.FloatTensor(N.size()).uniform_() > 0.5, -length_variation, length_variation)
+                N += length_variation
+            if input_text:
+                return self.sample_txt_tok(tok, pos, loc_img, loc_txt, loc_spc, N, return_tokens=return_tokens,
+                                           input_loc_mask=loc_mask)
+            else:
+                return self.sample_txt_tok(tok, pos, loc_img, loc_txt, loc_spc, N, return_tokens=return_tokens)
 
-        texts = token2txt(texts_token.view(-1, texts_token.size(-1)), self.tokenizer)
 
-        return texts

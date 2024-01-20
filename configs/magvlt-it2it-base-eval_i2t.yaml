@@ -1,0 +1,89 @@
+dataset:
+  type: mapstyle
+  name: coco2014
+  tokenizer:
+    type: ClipBPE
+    hparams:
+      context_length: 64
+      bpe_pdrop: 0.1
+  use_hnh_task: True
+  hnh_task_scheme: 1
+  gt_text: True
+  eval_center_crop: True
+
+stage1:
+  type: vqgan
+  embed_dim: 256
+  n_embed: 16384
+  hparams:
+    double_z: False
+    z_channels: 256
+    resolution: 256
+    in_channels: 3
+    out_ch: 3
+    ch: 128
+    ch_mult: [1, 1, 2, 2, 4]
+    num_res_blocks: 2
+    attn_resolutions: [16]
+    pdrop: 0.0
+  path: /data/karlo-research_715/karlo-backbone/magvlt/pretrained/vqgan_16k_pretrained/checkpoints/last_for_stage2.ckpt
+
+
+stage2:
+  type: maskgit
+  backbone: transformer1d
+  vocab_size_txt: 49408
+  vocab_size_img: 16384
+  mask_hparams:
+    task: it2it-task
+    task_weights: 8,1,1  # t2i,i2t,it2it-mask
+    i2t_schedule: linear
+    i2t_n_steps: 12
+    t2i_schedule: cosine
+    t2i_n_steps: 8
+  hparams:
+    embed_dim: 1024
+    n_layers: 24
+    n_heads: 8
+    ctx_len_img: 256
+    ctx_len_txt: 64
+    embd_pdrop: 0.0
+    resid_pdrop: 0.0
+    attn_pdrop: 0.0
+    mlp_bias: True
+    attn_bias: True
+    gelu_use_approx: False
+    label_smoothing: 0.1
+    use_target_vocab_only: True
+    use_spc_pos: True
+    pos_emb_img_mode: 'la1d'
+    pos_emb_txt_mode: 'la1d'
+    pos_emb_spc_mode: 'la1d'
+    use_unroll_loss: True
+    length_loss_coef: 0.01
+
+sampling:
+  txt_max_len: 32
+  txt_num_cand_samples: 64
+  txt_sample_size: 32
+  txt_sample_method: sample_rerank
+  txt_mask_sample_method: sample
+  txt_top_k: 32
+  txt_top_p: 0
+  txt_num_steps: 8 # i2t_n_steps
+  txt_temperature: 0.5
+  img_num_cand_samples: 32
+  img_mask_sample_method: multinomial-maskgit
+  img_temperature_start: 1.4
+  img_temperature_end: 0.6
+  img_mult_temperature_start: 2.0
+  img_mult_temperature_end: 0.2
+  img_num_steps: 10
+  seed: 0
+
+experiment:
+  strategy:
+    type: ddp # [ddp, zero1, zero2, zero3]
+    offload_optimizer: False
+    offload_parameters: False
+  val_batch_size: 1
