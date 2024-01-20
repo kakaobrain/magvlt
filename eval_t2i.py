@@ -14,10 +14,10 @@ from magvlt.utils.config import build_config
 from magvlt.models import build_model
 from magvlt.models.utils import token2txt
 
-#from torchmetrics.image.fid import FrechetInceptionDistance
-#from torchmetrics.image.inception import InceptionScore
-from magvlt.utils.fid.fid import FrechetInceptionDistance
-from magvlt.utils.fid.inception_score import InceptionScore
+from torchmetrics.image.fid import FrechetInceptionDistance
+from torchmetrics.image.inception import InceptionScore
+#from magvlt.utils.fid.fid import FrechetInceptionDistance
+#from magvlt.utils.fid.inception_score import InceptionScore
 
 import clip
 import numpy as np
