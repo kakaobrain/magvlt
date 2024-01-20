@@ -70,7 +70,7 @@ python sampling_it2i.py --prompt=[YOUR PROMPT]
 ## Evaluation
 ### T2I evaluation 
   - Setting
-      - Download folders {"pycocoevalcap", "pycocotools"} and files {cocoeval.py, get_stanford_models.sh} from https://github.com/yxuansu/MAGIC/tree/main/image_captioning/evaluation, and place them under ./evaluation.
+      - Download folders {"pycocoevalcap", "pycocotools"} and files {cocoeval.py, get_stanford_models.sh} from [this repo](https://github.com/yxuansu/MAGIC/tree/main/image_captioning/evaluation), and place them under ./evaluation.
       - cd ./evaluation; bash get_stanford_models.sh 
 ```angular2html
 python eval_i2t.py cfg_path=configs/magvlt-it2it-base-eval_i2t.yaml checkpoint_path=[MAGVLT_MODEL_PATH] result_path=none result_file_path=[RESULT_JSON_FILE_PATH]
