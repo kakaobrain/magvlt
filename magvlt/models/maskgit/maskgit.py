@@ -663,6 +663,7 @@ class MaskGITModel(LightningModule):
         temp_end=0.6,
         multi_temp_st=2.0,
         multi_temp_end=0.2,
+        return_history=False,
     ):
         B = txt.shape[0]
         device = txt.device
@@ -671,6 +672,8 @@ class MaskGITModel(LightningModule):
         temps = np.linspace(temp_st, temp_end, n_steps)
         multi_temps = np.linspace(multi_temp_st, multi_temp_end, n_steps)
         rs = np.linspace(0, 1, n_steps + 1)[1:]
+
+        pixelss = []
 
         with torch.no_grad():
             tok, pos, loc_img, loc_txt, loc_spc = self._get_input(
@@ -727,19 +730,20 @@ class MaskGITModel(LightningModule):
                 gen_mask = torch.logical_and(prev_loc_mask, torch.logical_not(loc_mask))
                 tok[gen_mask] = sampled_img[gen_mask[loc_img]]
 
-        pixels = sampled_img * loc_mask[loc_img] + tok[loc_img] * torch.logical_not(
-            loc_mask[loc_img]
-        )
-        pixels = pixels.reshape([x.shape[0], -1])
-        hh = int(math.sqrt(pixels.shape[-1]))
-        pixels = pixels.reshape(pixels.shape[0], hh, hh)
-        pixels = self.model_vqvae.decode_code(pixels) * 0.5 + 0.5
-        pixels = torch.clamp(pixels, 0, 1) * 255
-        pixels = pixels.cpu().to(torch.uint8).permute(0, 2, 3, 1)
-        pixels = torch.split(pixels, 1)
-        pixels = [Image.fromarray(pixel.squeeze().numpy()) for pixel in pixels]
+                if return_history or step == n_steps - 1:
+                    # pixels = sampled_img.reshape([x.shape[0], -1]) * loc_mask[:, offset:] + tok[:, offset:] * torch.logical_not(loc_mask[:, offset:])
+                    pixels = sampled_img * loc_mask[loc_img] \
+                             + tok[loc_img] * torch.logical_not(loc_mask[loc_img])
+                    pixels = pixels.reshape([x.shape[0], -1])
+                if return_history:
+                    pixelss.append(pixels)
 
-        return pixels
+        if return_history:
+            pixelss = torch.stack(pixelss)
+            pixelss = pixelss.transpose(0, 1)
+            return pixelss
+        else:
+            return pixels
 
     def sample_it2i(
         self,
