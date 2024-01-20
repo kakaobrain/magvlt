@@ -39,8 +39,6 @@ stage2:
     task_weights: 8,1,1  # t2i,i2t,it2it-mask
     i2t_schedule: linear
     i2t_n_steps: 12
-    t2i_schedule: cosine
-    t2i_n_steps: 8
   hparams:
     embed_dim: 1024
     n_layers: 24
@@ -70,15 +68,8 @@ sampling:
   txt_mask_sample_method: sample
   txt_top_k: 32
   txt_top_p: 0
-  txt_num_steps: 8 # i2t_n_steps
+  txt_num_steps: 12
   txt_temperature: 0.5
-  img_num_cand_samples: 32
-  img_mask_sample_method: multinomial-maskgit
-  img_temperature_start: 1.4
-  img_temperature_end: 0.6
-  img_mult_temperature_start: 2.0
-  img_mult_temperature_end: 0.2
-  img_num_steps: 10
   seed: 0
 
 experiment:

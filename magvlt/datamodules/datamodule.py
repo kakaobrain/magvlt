@@ -5,7 +5,7 @@ import pytorch_lightning as pl
 from torch.utils.data import DataLoader
 from torch.utils.data import IterableDataset
 
-from magvlt.datamodules.datasets.mapstyle import MapStyleDataset, VQAMapStyleDataset
+from magvlt.datamodules.datasets.mapstyle import MapStyleDataset
 from magvlt.datamodules.datasets.dataclass import Items
 
 
