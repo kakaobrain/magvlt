@@ -262,7 +262,7 @@ if __name__ == "__main__":
     datamodule.setup()
     if cfg.dataset.name.startswith("coco"):
         test_dataloader = datamodule.test_dataloader()
-        test_dataloader.dataset.set_custom_length(10)
+        test_dataloader.dataset.set_custom_length(5000)
     elif cfg.dataset.name == 'nocaps':
         test_dataloader = datamodule.val_dataloader()
         test_dataloader.dataset.set_custom_length(4500)
