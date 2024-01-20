@@ -144,26 +144,26 @@ class TokenizerUtils:
         caption = TokenizerUtils.pre_caption(caption)
         caption = caption.replace("<", "").replace(">", "")
 
-        # remove strings after punctuation
-        idx_punct = len(caption)
-        try:
-            idx_punct = caption.index(".")
-        except:
-            pass
-        caption = caption[:idx_punct]
-
-        # deduplication
-        items = caption.split()
-        temp = items[0]
-        new_caption = [items[0]]
-        for item in items[1:]:
-            if item != temp:
-                new_caption.append(item)
-            temp = item
-        caption = " ".join(new_caption)
-
-        # add punctuation
-        caption += " ."
+        # # remove strings after punctuation
+        # idx_punct = len(caption)
+        # try:
+        #     idx_punct = caption.index(".")
+        # except:
+        #     pass
+        # caption = caption[:idx_punct]
+        #
+        # # deduplication
+        # items = caption.split()
+        # temp = items[0]
+        # new_caption = [items[0]]
+        # for item in items[1:]:
+        #     if item != temp:
+        #         new_caption.append(item)
+        #     temp = item
+        # caption = " ".join(new_caption)
+        #
+        # # add punctuation
+        # caption += " ."
 
         return caption
 
